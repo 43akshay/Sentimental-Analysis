@@ -92,7 +92,7 @@ st.markdown("""
     }
 
     /* Subtle Clear button */
-    div[data-testid="stVerticalBlock"] > div:nth-child(2) button {
+    button[key="clear_all_btn"] {
         background: none !important;
         border: none !important;
         color: #94a3b8 !important;
@@ -101,6 +101,9 @@ st.markdown("""
         padding: 0 !important;
         margin: 0 !important;
         box-shadow: none !important;
+        height: auto !important;
+        line-height: normal !important;
+        min-height: unset !important;
     }
 
     /* Hide streamlit elements */

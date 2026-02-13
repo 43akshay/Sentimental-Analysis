@@ -36,7 +36,7 @@ class ModelService:
             return {"error": "Model not loaded. Please train the model first."}
 
         processed_text = preprocess_text(text)
-        inputs = self.tokenizer(processed_text, return_tensors="pt", truncation=True, max_length=256, padding=True)
+        inputs = self.tokenizer(processed_text, return_tensors="pt", truncation=True, max_length=64, padding=True)
 
         # Move inputs to same device as model
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
@@ -78,17 +78,47 @@ class ModelService:
         else:
             overall_sentiment = "Neutral"
 
-        # Generate Key Logic (Simplified)
-        top_label = results[0]["label"]
-        logic_templates = {
-            "joy": "The text expresses happiness, satisfaction, or pleasure, indicating a very positive emotional state.",
-            "love": "The text conveys affection, warmth, or deep appreciation, showing strong positive connections.",
-            "sadness": "The text reflects feelings of sorrow, disappointment, or loss, suggesting a negative emotional tone.",
-            "anger": "The text indicates frustration, resentment, or hostility, pointing towards a strong negative sentiment.",
-            "fear": "The text shows apprehension, anxiety, or concern, reflecting an unsettled or fearful state.",
-            "surprise": "The text suggests amazement or an unexpected realization, which can be seen as a neutral or transitional emotion."
+        # Generate Key Logic
+        top_res = results[0]
+        label = top_res["label"]
+        confidence = top_res["confidence"]
+
+        intensity = "strong" if confidence > 0.8 else "moderate" if confidence > 0.5 else "mild"
+        narrative_style = "concise" if len(text) < 50 else "detailed"
+
+        base_explanations = {
+            "joy": {
+                "concise": "The text reflects a positive and upbeat tone.",
+                "detailed": f"The analysis identifies a {intensity} sense of joy. The phrasing suggests optimism and a high level of emotional satisfaction."
+            },
+            "love": {
+                "concise": "The text conveys affection and warmth.",
+                "detailed": f"The model detects {intensity} indicators of love or deep appreciation. This suggests strong positive connections or emotional attachment."
+            },
+            "sadness": {
+                "concise": "The tone appears somber or disappointed.",
+                "detailed": f"A {intensity} presence of sadness was detected. The content likely reflects feelings of loss, sorrow, or emotional low."
+            },
+            "anger": {
+                "concise": "The text shows signs of frustration or hostility.",
+                "detailed": f"The analysis highlights {intensity} emotional markers for anger. This suggests resentment, annoyance, or strong negative energy."
+            },
+            "fear": {
+                "concise": "The text indicates anxiety or concern.",
+                "detailed": f"The model found {intensity} evidence of fear or apprehension. This suggests an unsettled state of mind or worry about the context."
+            },
+            "surprise": {
+                "concise": "The text suggests amazement or unexpectedness.",
+                "detailed": f"The analysis reveals elements of surprise. This indicates that the text describes an unexpected event or a sudden realization."
+            }
         }
-        key_logic = logic_templates.get(top_label, "The analysis is based on the predominant emotional patterns detected in the text.")
+
+        style = base_explanations.get(label, {"concise": f"Dominant emotion: {label}", "detailed": f"Primary emotional pattern: {label}"})
+        key_logic = style.get(narrative_style)
+
+        # Add nuance if the second emotion is close
+        if len(results) > 1 and results[1]["confidence"] > 0.3 and narrative_style == "detailed":
+            key_logic += f" Additionally, subtle traces of {results[1]['label']} were also detected, adding complexity to the overall emotional profile."
 
         return {
             "text": text,
