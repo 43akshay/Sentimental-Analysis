@@ -1,0 +1,14 @@
+# CPU-only dependencies for free hosting (avoids large CUDA downloads)
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+fastapi
+uvicorn
+transformers
+torch==2.5.1+cpu
+datasets
+pandas
+scikit-learn
+streamlit
+python-multipart
+evaluate
+accelerate
