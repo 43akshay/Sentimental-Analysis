@@ -66,3 +66,50 @@ I am so angry;anger
 It is okay;neutral
 ```
 The system automatically detects all unique labels and configures the model accordingly.
+
+
+## Deployment on Free Hosting (Fast + Low Download Size)
+
+If you see very large downloads like `nvidia_cudnn_cu12` during `pip install`, that means pip is pulling GPU CUDA wheels for `torch`.
+On free hosting, prefer CPU-only builds.
+
+### 1) Use CPU-only requirements
+For backend/API deployments use:
+
+```bash
+pip install -r requirements.cpu.txt
+```
+
+This pins CPU-only PyTorch and avoids multi-GB CUDA package downloads.
+
+### 2) Host model files on Hugging Face Model Hub
+1. Train locally: `python train.py`
+2. Upload `models/sentiment_model/` contents to a HF model repo.
+3. In backend startup, download model files into `./models/sentiment_model` before starting API.
+
+### 3) Host backend for free (Render)
+1. Push this repo to GitHub.
+2. Create a Render **Web Service**.
+3. Build command:
+   ```bash
+   pip install -r requirements.cpu.txt
+   ```
+4. Start command:
+   ```bash
+   uvicorn api:app --host 0.0.0.0 --port $PORT
+   ```
+5. Ensure model files exist at `./models/sentiment_model` (download from HF during startup).
+
+### 4) Host frontend for free (Hugging Face Spaces)
+1. Create a **Streamlit** Space.
+2. Use lightweight UI dependencies:
+   ```bash
+   pip install -r requirements.ui.txt
+   ```
+3. Call your Render backend `/predict` endpoint from the UI.
+4. Add backend URL in Space Secrets (example: `API_URL`).
+
+### 5) Speed tips
+- Keep backend and model in same region.
+- Keep backend warm (free tiers may sleep).
+- Add confidence threshold (for example 0.70) so uncertain predictions are not shown as final.
